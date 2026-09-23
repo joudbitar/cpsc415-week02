@@ -12,6 +12,8 @@ Me, as a student learning what a chat API call contains. The role and tone make 
 - At most 1 cent per question. Before sending, the program looks up the model's price and refuses if the worst case (the prompt plus the full `max_tokens` reply) could go over 1 cent. Models with no listed price, such as a local one, skip the check.
 - Role and tone come from `--role` and `--tone` flags. If either is missing and the program runs in a terminal, it shows an arrow-key menu for it.
 - `max_tokens` is 300.
+- Six roles: pirate, noir detective, sports commentator, Shakespearean actor, Lebanese teta, medieval knight. Six tones: angry, sleepy, overdramatic, deadpan, overexcited, suspicious. Any role goes with any tone.
+- The cost on the receipt is the one OpenRouter reports in its response, the same record the Activity page shows.
 - Due Monday, September 28, 2026, 1:30 PM.
 
 ## Not in scope
@@ -29,7 +31,6 @@ Me, as a student learning what a chat API call contains. The role and tone make 
 - A model too expensive for 1 cent at the chosen `max_tokens` is refused before any request is sent.
 
 ## Open questions
-- Which roles and tones go in the menus, and how many of each?
-- Does the receipt's cost come from OpenRouter's response, or is it computed from the price list?
+None left.
 
-**Approved by:** <your name>, <date>
+**Approved by:** Joud Bitar, 2026-09-23
