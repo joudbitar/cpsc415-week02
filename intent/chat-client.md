@@ -4,13 +4,14 @@
 A command-line program that sends one question to a language model and prints the answer in a character's voice, built from a role (pirate, detective, sports commentator...) and a tone (angry, sleepy, overdramatic...) chosen from two menus. After the answer it prints one receipt line with the model name, the input and output token counts, and the cost.
 
 ## Who it is for
-Me, as a student learning what a chat API call contains. The role and tone make the system prompt visible: changing them changes the answer in a way anyone can see. Today I only talk to models through apps that hide the request.
+Me, as a student learning what a chat API call contains. The role and tone make the system prompt visible: changing them changes the answer in a way anyone can see.
 
 ## Constraints
 - Python 3.9 or later, standard library only. One file, `chat.py`.
 - The base URL comes from `CHAT_BASE_URL`, the model from `CHAT_MODEL`, the key from `OPENROUTER_API_KEY`. Nothing secret in the code or the repository.
 - At most 1 cent per question. Before sending, the program looks up the model's price and refuses if the worst case (the prompt plus the full `max_tokens` reply) could go over 1 cent. Models with no listed price, such as a local one, skip the check.
 - Role and tone come from `--role` and `--tone` flags. If either is missing and the program runs in a terminal, it shows an arrow-key menu for it.
+- `max_tokens` is 300.
 - Due Monday, September 28, 2026, 1:30 PM.
 
 ## Not in scope
@@ -29,7 +30,6 @@ Me, as a student learning what a chat API call contains. The role and tone make 
 
 ## Open questions
 - Which roles and tones go in the menus, and how many of each?
-- What `max_tokens` should be, since it sets both the answer length and the worst-case cost.
 - Does the receipt's cost come from OpenRouter's response, or is it computed from the price list?
 
 **Approved by:** <your name>, <date>
