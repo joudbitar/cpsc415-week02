@@ -17,6 +17,7 @@ MODELS = {"data": [
 ]}
 
 REPLY = {
+    "id": "gen-123",
     "model": "cheap/model",
     "choices": [{"message": {"role": "assistant", "content": "Arr, 'tis the text a model can see!"}}],
     "usage": {"prompt_tokens": 42, "completion_tokens": 17, "cost": 0.0000109},
@@ -142,6 +143,7 @@ class Output(unittest.TestCase):
         self.assertIn('"max_tokens": 300', err)
         self.assertIn('"role": "system"', err)
         self.assertNotIn("test-key", err)
+        self.assertIn("id: gen-123", err)
 
 
 class Errors(unittest.TestCase):

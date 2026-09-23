@@ -196,6 +196,8 @@ def main(argv=None, env=os.environ):
     except urllib.error.URLError as error:
         sys.exit(f"could not reach {base_url}: {error.reason}")
 
+    if args.show_request:
+        print(f"id: {reply.get('id')} (look it up on the OpenRouter Activity page)", file=sys.stderr)
     print(answer_text(reply))
     line = receipt(reply)
     print(f"\x1b[2m{line}\x1b[0m" if sys.stdout.isatty() else line)
