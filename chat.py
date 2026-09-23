@@ -43,10 +43,10 @@ def system_prompt(role, tone):
     )
 
 
-def build_request(model, role, tone, question):
+def build_request(model, role, tone, question, max_tokens=MAX_TOKENS):
     return {
         "model": model,
-        "max_tokens": MAX_TOKENS,
+        "max_tokens": max_tokens,
         "messages": [
             {"role": "system", "content": system_prompt(role, tone)},
             {"role": "user", "content": question},
@@ -154,6 +154,7 @@ def main(argv=None, env=os.environ):
     parser.add_argument("question")
     parser.add_argument("--role", choices=ROLES)
     parser.add_argument("--tone", choices=TONES)
+    parser.add_argument("--max-tokens", type=int, default=MAX_TOKENS, help="reply budget (default 300)")
     parser.add_argument("--show-request", action="store_true", help="print the JSON sent")
     args = parser.parse_args(argv)
 
@@ -171,7 +172,7 @@ def main(argv=None, env=os.environ):
                 sys.exit(f"--{name} is required here; choose from: {', '.join(options)}")
             setattr(args, name, pick(f"Choose a {name}", options))
 
-    request = build_request(model, args.role, args.tone, args.question)
+    request = build_request(model, args.role, args.tone, args.question, args.max_tokens)
     if args.show_request:
         print(json.dumps(request, indent=2), file=sys.stderr)
 
@@ -185,7 +186,7 @@ def main(argv=None, env=os.environ):
     elif worst_case_usd(request, price) > BUDGET_USD:
         sys.exit(
             f"refused: worst case ${worst_case_usd(request, price):.4f} is over the 1¢ limit "
-            f"({model}, {MAX_TOKENS} max tokens)"
+            f"({model}, {args.max_tokens} max tokens)"
         )
 
     try:

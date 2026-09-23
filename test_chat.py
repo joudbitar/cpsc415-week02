@@ -96,6 +96,10 @@ class CostGuard(unittest.TestCase):
         self.assertIn("refused: could not read prices", exit_message)
         self.assertEqual(len(calls), 1)  # the price lookup only
 
+    def test_max_tokens_flag_changes_the_request(self):
+        _, _, _, calls = run(["--role", "pirate", "--tone", "angry", "--max-tokens", "20", "hi"])
+        self.assertEqual(calls[1].args[2]["max_tokens"], 20)
+
     def test_the_limit_is_exactly_one_cent(self):
         request = chat.build_request("m", "pirate", "angry", "hi")
         per_output_token = 0.01 / 300
