@@ -1,45 +1,73 @@
-# Artifact-chain template
+# Chat client with a role and a tone
 
-Starting point for major project submissions in CPSC 415 (AI Integration, Trinity College). Click **Use this template** on GitHub to create your own repository from it. Do not fork.
+Asks a model one question and prints the answer in a character's voice: pick a role (pirate, noir detective, Lebanese teta...) and a tone (angry, sleepy, deadpan...), any of 36 combinations. The last line is a receipt with the model, the token counts and the cost. Before anything is sent, the program checks the model's price and refuses if the question could cost more than 1 cent.
 
-The course follows Anthropic's [AI-Native SDLC Playbook](https://claude.com/blog/the-ai-native-sdlc-playbook): every stage of the work leaves a short, version-controlled artifact. The agent writes most of the code. You decide what gets built, steer, verify, and explain every choice. These files are how you prove you understood what the agent built.
+Built for CPSC 415 Week 2 from the approved intent in [`intent/chat-client.md`](intent/chat-client.md).
 
-## Early labs
+## Run it
 
-Week 1 uses the minimal repository described in the course handout. Later introductory labs complete only the stages assigned so far. This template describes the full chain for team projects and the final portfolio; it does not require unintroduced artifacts in Week 1. Project languages are chosen and justified, with one separate guided exercise in an unfamiliar language.
+Python 3.9 or newer, standard library only.
 
-## The chain
+```bash
+export CHAT_BASE_URL=https://openrouter.ai/api/v1
+export CHAT_MODEL=minimax/minimax-m3
+export OPENROUTER_API_KEY=...   # never in a file in this repo
+python3 chat.py --role pirate --tone angry "In one sentence, what is a context window?"
+```
 
-| Stage | File | Written by | Approved by |
+```text
+Arrr, ye scallywag, a context window be the blasted chunk o' text ...
+── minimax/minimax-m3 · 207 in / 182 out · $0.000245
+```
+
+Leave out `--role` or `--tone` and a menu opens (arrow keys, Enter). `--show-request` prints the exact JSON sent and the request id. `--max-tokens` changes the reply budget from the default 300. For a local model, point `CHAT_BASE_URL` at it and set `CHAT_API_KEY` to any string.
+
+Tests run offline, with no key:
+
+```bash
+python3 -m unittest
+```
+
+## What I corrected in the intent
+
+The agent interviewed me and wrote the draft, then I made two corrections before approving it. The commits show each step.
+
+1. I deleted a sentence claiming I only use models through apps that hide the request. That was made up. I've already called OpenRouter from code in another project.
+2. I set `max_tokens` to 300. The draft left it as an open question, and it has to be settled because it controls both how long an answer can be and the worst-case cost the 1 cent check uses.
+
+I also chose the six roles and six tones, and decided the receipt shows the cost OpenRouter reports rather than one the program computes, so it's the same number the Activity page records.
+
+## One line I can explain
+
+```python
+return estimate_tokens(request) * input_price + request["max_tokens"] * output_price
+```
+
+That's `worst_case_usd` in `chat.py`, the heart of the 1 cent guard. The price per token comes from OpenRouter's public model list. The input side is an estimate (about 4 characters per token, rounded up). The output side assumes the model uses its entire `max_tokens` budget, because nothing stops it from doing that. If the total is over $0.01, the program exits before the chat request is sent. With Claude Opus 4.1 that comes to $0.0232, so it's refused. With MiniMax M3 it's under $0.0004.
+
+## A bug the checks caught
+
+The first version put the price lookup in a `try` block and treated any failure as "no listed price", which skips the guard. My Python 3.13 couldn't make HTTPS calls at first (the python.org installer ships without root certificates), so every lookup failed, and a model of any price would have been sent anyway. Now a failed lookup refuses to send, and `test_a_failed_price_lookup_sends_nothing` covers it.
+
+## Two models, one question
+
+Same question, same angry pirate, only `CHAT_MODEL` changed:
+
+| Model | Answer | Tokens (in / out) | Cost (OpenRouter's record) |
 |---|---|---|---|
-| Plan | `intent/<name>.md` | The agent, after interviewing you | You |
-| Design | `spec.md` | The agent, from the approved intent | You, against the intent |
-| Build | `plan.md`, then code on a branch | The agent | You, before any code |
-| Test | tests, lint, CI | The agent | You confirm the loop actually ran |
-| Deploy | a pull request reviewed against `REVIEW.md` | A separate reviewing agent | You merge |
-| Maintain | a new `intent/<name>.md` | Triggered by a bug, a ticket, or a model change | You triage |
+| `minimax/minimax-m3` | Long, heavy on pirate slang, and it explained that input and output tokens both count | 207 / 182 | $0.000245 |
+| `deepseek/deepseek-v4-flash` | One short sentence: the amount of text a model can see before it forgets the rest | 120 / 53 | $0.000021 |
 
-`CLAUDE.md` and `REVIEW.md` travel with the repo and are graded artifacts.
+That's one question each, so it's an observation, not a benchmark. Part of MiniMax's output count is hidden reasoning: on another run its record showed 48 of 102 output tokens spent reasoning. With `max_tokens` at 20, all 20 went to reasoning and the visible answer was empty, but it was still billed $0.000051.
 
-## Rules that are graded
+The biggest surprise was DeepSeek. OpenRouter sent it to a different provider on different requests (DeepInfra, then AtlasCloud), and the input count for the same prompt went from 120 to 41. One run even returned 52 tokens past a 20-token cap. Details are in [`CHECKS.md`](CHECKS.md).
 
-- Intent and spec exist before code. Plan is approved before implementation. The commit history shows it.
-- One pull request per feature, from a branch, reviewed before merge. Do not commit to `main` directly after the first commit.
-- `spec.md` states the **language** and the **model** for each component and why.
-- `ANNOTATION.md` answers the four questions for the finished project.
-- No secrets in the repo. `.claude/settings.local.json` and `.env` are ignored; the `.example` file shows the shape.
+## Local model
 
-## Submitting
+Not tried. There's no Ollama or LM Studio on this laptop, and 16 GB of memory is the minimum the setup guide lists. The code already supports it: `CHAT_API_KEY` takes priority over `OPENROUTER_API_KEY`, and a model with no listed price skips the 1 cent check with a note.
 
-Tag the commit you are submitting and put the repository URL plus the tag on Moodle:
+## How it was built
 
-```
-git tag tp1-submitted
-git push origin tp1-submitted
-```
+Harness: Claude Code. Model: Claude Opus 5.5, on my Claude subscription. The agent ran the discovery interview, drafted the intent, proposed a plan I approved, and wrote `chat.py` and the tests. The live checks were run by the agent at my request, with my OpenRouter key read from the macOS Keychain for each command and never written to a file. The models the program itself called are MiniMax M3 and DeepSeek V4 Flash, through my OpenRouter account.
 
-Tags the course uses: `intent-spec`, `tp1-submitted`, `tp2-submitted`, `portfolio-final`.
-
-## Running the agent
-
-Copy `.claude/settings.local.json.example` to `.claude/settings.local.json` and fill in your OpenRouter key and model slugs, or use the `orclaude` launcher from the [course repository](https://github.com/kousen/ai-integration-course/tree/main/scripts).
+All the live calls in this lab together cost under $0.001 on OpenRouter.
